@@ -1,38 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>THORYOS | SECURE</title>
+    <title>THORYOS | BUNKERS</title>
     <style>
-        body { background: #050505; color: #00ffcc; font-family: 'Courier New', monospace; display: flex; justify-content: center; padding-top: 50px; }
-        .vault { width: 400px; border: 1px solid #333; padding: 20px; border-radius: 8px; background: #0a0a0a; }
-        .file { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #222; padding-bottom: 5px; }
-        button { cursor: pointer; background: #00ffcc; border: none; padding: 5px 10px; font-weight: bold; }
-        .del { background: #ff3333; color: white; }
+        body { background: #050505; color: #00ffcc; font-family: 'Courier New', monospace; display: flex; justify-content: center; padding: 50px; }
+        .vault { width: 450px; border: 1px solid #333; padding: 20px; border-radius: 8px; background: #0a0a0a; }
+        input, button { background: #111; color: #00ffcc; border: 1px solid #00ffcc; padding: 10px; width: 100%; margin: 5px 0; }
+        button { cursor: pointer; background: #00ffcc; color: #000; font-weight: bold; }
+        .del { background: #ff3333; color: white; border: none; width: auto; padding: 5px 10px; }
+        .file { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #222; }
     </style>
 </head>
 <body>
-    <div class="vault">
+    <div class="vault" id="app">
         <h2>THORYOS BUNKERS</h2>
-        <div id="fileList"></div>
+        <div id="loginArea">
+            <input type="password" id="pass" placeholder="MASTER KEY">
+            <button onclick="login()">AUTHORIZE</button>
+        </div>
+        <div id="vaultArea" style="display:none;">
+            <input type="file" id="fileInput">
+            <button onclick="upload()">UPLOAD DATA</button>
+            <div id="fileList"></div>
+        </div>
     </div>
     <script>
+        async function login() {
+            const p = document.getElementById('pass').value;
+            const res = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:p})});
+            if(res.ok) { document.getElementById('loginArea').style.display='none'; document.getElementById('vaultArea').style.display='block'; load(); }
+        }
         async function load() {
             const res = await fetch('/api/files');
             const data = await res.json();
-            const container = document.getElementById('fileList');
-            container.innerHTML = data.files.map(f => `
-                <div class="file">${f} <button class="del" onclick="del('${f}')">DELETE</button></div>
-            `).join('');
+            document.getElementById('fileList').innerHTML = data.files.map(f => `<div class="file">${f} <button class="del" onclick="del('${f}')">DEL</button></div>`).join('');
         }
-        async function del(name) {
-            await fetch('/api/delete', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({filename: name})
-            });
+        async function upload() {
+            const f = document.getElementById('fileInput').files[0];
+            const d = new FormData(); d.append('file', f);
+            await fetch('/api/upload', { method:'POST', body:d });
             load();
         }
-        load();
+        async function del(n) {
+            await fetch('/api/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filename:n})});
+            load();
+        }
     </script>
 </body>
 </html>
