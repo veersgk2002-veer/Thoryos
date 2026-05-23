@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>THORYOS | SECURE</title>
+    <style>
+        body { background: #050505; color: #00ffcc; font-family: 'Courier New', monospace; display: flex; justify-content: center; padding-top: 50px; }
+        .vault { width: 400px; border: 1px solid #333; padding: 20px; border-radius: 8px; background: #0a0a0a; }
+        .file { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #222; padding-bottom: 5px; }
+        button { cursor: pointer; background: #00ffcc; border: none; padding: 5px 10px; font-weight: bold; }
+        .del { background: #ff3333; color: white; }
+    </style>
+</head>
+<body>
+    <div class="vault">
+        <h2>THORYOS BUNKERS</h2>
+        <div id="fileList"></div>
+    </div>
+    <script>
+        async function load() {
+            const res = await fetch('/api/files');
+            const data = await res.json();
+            const container = document.getElementById('fileList');
+            container.innerHTML = data.files.map(f => `
+                <div class="file">${f} <button class="del" onclick="del('${f}')">DELETE</button></div>
+            `).join('');
+        }
+        async function del(name) {
+            await fetch('/api/delete', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({filename: name})
+            });
+            load();
+        }
+        load();
+    </script>
+</body>
+</html>
